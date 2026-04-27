@@ -1,6 +1,6 @@
-// Command aire-demo is the v0.1 launch demo: two AIRE nodes in one process,
-// streaming a fixed-length token sequence over a single Operation, with the
-// client tearing the connection down mid-stream.
+// Command aire-demo is the canonical v0.1 demo: two AIRE nodes in one
+// process, streaming a fixed-length token sequence over a single Operation,
+// with the client tearing the connection down mid-stream.
 //
 // Real per-Operation CANCEL semantics arrive in v0.3 (spec §7); for v0.1 we
 // approximate by closing the entire connection from the client side, which

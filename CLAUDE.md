@@ -30,7 +30,7 @@ CI runs build / test / vet / golangci-lint on every push and PR. Always run all 
 - `frame.go` — frame type definitions, wire encoding/decoding (per spec §2)
 - `conn.go` — connection abstraction over QUIC; maps Operations to QUIC streams
 - `node.go` — local runtime: accept loop, stream dispatch, agent registry
-- `cmd/aire-demo/` — the canonical two-node demo (launch demo for v0.1)
+- `cmd/aire-demo/` — the canonical two-node demo for v0.1
 - Future: `handshake.go`, `capability.go`, `identity.go`, `cancel.go`, `budget.go` — one file per major spec section
 
 Keep one Go package at root (`package aire`). Avoid premature subpackaging.
