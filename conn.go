@@ -129,6 +129,12 @@ func (c *Conn) AcceptStream(ctx context.Context) (*Stream, error) {
 	return &Stream{qs: qs}, nil
 }
 
+// Context returns the underlying QUIC connection's context. The context is
+// cancelled when the connection is closed, by either peer.
+func (c *Conn) Context() context.Context {
+	return c.qc.Context()
+}
+
 // LocalAddr returns the local network address.
 func (c *Conn) LocalAddr() net.Addr {
 	return c.qc.LocalAddr()

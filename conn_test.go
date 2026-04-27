@@ -81,6 +81,8 @@ func TestQUICTransport_RoundTripFrame(t *testing.T) {
 		t.Errorf("expected io.EOF after echo, got %v", err)
 	}
 
+	// Close the connection explicitly so the server's waiter unblocks.
+	_ = conn.Close()
 	if err := <-serverErr; err != nil {
 		t.Fatalf("server error: %v", err)
 	}
@@ -137,6 +139,7 @@ func TestQUICTransport_MultipleFramesOneStream(t *testing.T) {
 		}
 	}
 
+	_ = conn.Close()
 	if err := <-serverErr; err != nil {
 		t.Fatalf("server error: %v", err)
 	}
@@ -158,7 +161,6 @@ func TestQUICTransport_MultipleStreams(t *testing.T) {
 			t.Errorf("Accept: %v", err)
 			return
 		}
-		defer func() { _ = conn.Close() }()
 
 		var wg sync.WaitGroup
 		for i := 0; i < 5; i++ {
@@ -183,6 +185,9 @@ func TestQUICTransport_MultipleStreams(t *testing.T) {
 			}(s)
 		}
 		wg.Wait()
+		// Wait for client to close before letting our deferred listener.Close
+		// race with in-flight echo data.
+		<-conn.Context().Done()
 	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -221,11 +226,14 @@ func TestQUICTransport_MultipleStreams(t *testing.T) {
 		}(uint64(i + 1))
 	}
 	wg.Wait()
+	_ = conn.Close()
 	<-serverDone
 }
 
 // runEchoServer accepts a single connection, accepts a single stream, and
-// echoes every frame received until the peer FINs.
+// echoes every frame received until the peer FINs. It then FINs its own
+// send-side and waits for the peer to close the connection before returning,
+// so echo data is not raced by a server-initiated CONNECTION_CLOSE.
 func runEchoServer(t *testing.T, l *Listener) error {
 	t.Helper()
 	ctx := context.Background()
@@ -233,24 +241,28 @@ func runEchoServer(t *testing.T, l *Listener) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = conn.Close() }()
 
 	stream, err := conn.AcceptStream(ctx)
 	if err != nil {
+		_ = conn.Close()
 		return err
 	}
-	defer func() { _ = stream.Close() }()
 
 	for {
 		f, err := stream.RecvFrame()
 		if errors.Is(err, io.EOF) {
-			return nil
+			break
 		}
 		if err != nil {
+			_ = conn.Close()
 			return err
 		}
 		if err := stream.SendFrame(f); err != nil {
+			_ = conn.Close()
 			return err
 		}
 	}
+	_ = stream.Close()
+	<-conn.Context().Done()
+	return nil
 }
