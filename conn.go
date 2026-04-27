@@ -76,13 +76,14 @@ func Listen(addr string, tlsConf *tls.Config) (*Listener, error) {
 	return &Listener{ql: ql}, nil
 }
 
-// Accept blocks until an incoming AIRE connection arrives.
+// Accept blocks until an incoming AIRE connection arrives. The returned Conn
+// must call Handshake before any other AIRE operation.
 func (l *Listener) Accept(ctx context.Context) (*Conn, error) {
 	qc, err := l.ql.Accept(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("aire: Accept: %w", err)
 	}
-	return &Conn{qc: qc}, nil
+	return &Conn{qc: qc, isClient: false}, nil
 }
 
 // Addr returns the listener's network address.
@@ -98,16 +99,20 @@ func (l *Listener) Close() error {
 // Conn is an AIRE connection riding on a single QUIC connection between two
 // nodes (spec §1.3).
 type Conn struct {
-	qc *quic.Conn
+	qc       *quic.Conn
+	isClient bool            // set by Dial / Listener.Accept
+	ctrl     *Stream         // control stream (spec §4); nil before Handshake
+	state    *HandshakeState // populated by Handshake
 }
 
-// Dial opens an AIRE connection to addr.
+// Dial opens an AIRE connection to addr. The returned Conn must call
+// Handshake before any other AIRE operation.
 func Dial(ctx context.Context, addr string, tlsConf *tls.Config) (*Conn, error) {
 	qc, err := quic.DialAddr(ctx, addr, tlsConf, nil)
 	if err != nil {
 		return nil, fmt.Errorf("aire: Dial %s: %w", addr, err)
 	}
-	return &Conn{qc: qc}, nil
+	return &Conn{qc: qc, isClient: true}, nil
 }
 
 // OpenStream opens a new bidirectional QUIC stream within the connection.
