@@ -1,0 +1,98 @@
+{
+  "version": "v0.1",
+  "spec": "SPEC.md §2.6 + §4.7",
+  "description": "Canonical wire-format test vectors. Implementations MUST round-trip every vector byte-for-byte.",
+  "vectors": [
+    {
+      "id": "empty-hello",
+      "section": "§2.6 vector 1",
+      "description": "Connection-level HELLO frame with no payload",
+      "encoded_hex": "01000000",
+      "frame": {
+        "type": 1,
+        "type_name": "HELLO",
+        "flags": 0,
+        "op_id": 0,
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "invoke-short-payload",
+      "section": "§2.6 vector 2",
+      "description": "INVOKE on operation 42 with a 2-byte ASCII payload",
+      "encoded_hex": "03002a026869",
+      "frame": {
+        "type": 3,
+        "type_name": "INVOKE",
+        "flags": 0,
+        "op_id": 42,
+        "payload_hex": "6869"
+      }
+    },
+    {
+      "id": "stream-large-opid",
+      "section": "§2.6 vector 3",
+      "description": "STREAM on operation 16384 with a 100-byte payload of 0xAB",
+      "encoded_hex": "0400800040004064abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
+      "frame": {
+        "type": 4,
+        "type_name": "STREAM",
+        "flags": 0,
+        "op_id": 16384,
+        "payload_hex": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+      }
+    },
+    {
+      "id": "cancel-op5",
+      "section": "§2.6 vector 5",
+      "description": "CANCEL on operation 5 with no payload",
+      "encoded_hex": "05000500",
+      "frame": {
+        "type": 5,
+        "type_name": "CANCEL",
+        "flags": 0,
+        "op_id": 5,
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "goodbye-control",
+      "section": "§2.6 vector 6",
+      "description": "GOODBYE connection-level frame with no payload",
+      "encoded_hex": "09000000",
+      "frame": {
+        "type": 9,
+        "type_name": "GOODBYE",
+        "flags": 0,
+        "op_id": 0,
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "invoke-8byte-opid",
+      "section": "§2.6 vector 7",
+      "description": "INVOKE with 8-byte varint OpID (value 2^60)",
+      "encoded_hex": "0300d00000000000000000",
+      "frame": {
+        "type": 3,
+        "type_name": "INVOKE",
+        "flags": 0,
+        "op_id": 1152921504606846976,
+        "payload_hex": ""
+      }
+    },
+    {
+      "id": "hello-with-capability",
+      "section": "§4.7",
+      "description": "HELLO from node 'node1' advertising one required capability 'core.streaming' v1",
+      "encoded_hex": "0100001a0001056e6f646531010e636f72652e73747265616d696e670101",
+      "frame": {
+        "type": 1,
+        "type_name": "HELLO",
+        "flags": 0,
+        "op_id": 0,
+        "payload_hex": "0001056e6f646531010e636f72652e73747265616d696e670101"
+      }
+    }
+  ]
+}
