@@ -205,4 +205,3 @@ func TestPeers_FanOutToBHasNoHeadOfLineBlocking(t *testing.T) {
 		t.Errorf("slow chunk arrived at %v, expected ≥ %v", secondAt, slowDelay-50*time.Millisecond)
 	}
 }
-

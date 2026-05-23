@@ -47,9 +47,9 @@ func TestDidWebToURL_Errors(t *testing.T) {
 
 func TestParseHandle(t *testing.T) {
 	cases := []struct {
-		in              string
+		in                    string
 		wantLocal, wantDomain string
-		wantErr         bool
+		wantErr               bool
 	}{
 		{"summarizer@aire.example.com", "summarizer", "aire.example.com", false},
 		{"@summarizer@aire.example.com", "summarizer", "aire.example.com", false},
