@@ -1,0 +1,81 @@
+{
+  "version": "v0.3",
+  "spec": "SPEC.md §7.2.5 + §8.7",
+  "description": "Canonical wire-format test vectors for the v0.3 CANCEL and BUDGET frames. Implementations MUST round-trip every vector byte-for-byte.",
+  "vectors": [
+    {
+      "id": "cancel-user-no-detail",
+      "section": "§7.2.5 vector 1",
+      "description": "CANCEL on operation 5 with reason USER_CANCELLED and no detail",
+      "encoded_hex": "050005020000",
+      "frame": {
+        "type": 5,
+        "type_name": "CANCEL",
+        "flags": 0,
+        "op_id": 5,
+        "payload_hex": "0000"
+      },
+      "decoded": {
+        "reason": 0,
+        "reason_name": "USER_CANCELLED",
+        "detail": ""
+      }
+    },
+    {
+      "id": "cancel-upstream-with-detail",
+      "section": "§7.2.5 vector 2",
+      "description": "CANCEL on operation 10 with reason UPSTREAM_CANCELLED and detail \"parent: ABORT\"",
+      "encoded_hex": "05000a0f030d706172656e743a2041424f5254",
+      "frame": {
+        "type": 5,
+        "type_name": "CANCEL",
+        "flags": 0,
+        "op_id": 10,
+        "payload_hex": "030d706172656e743a2041424f5254"
+      },
+      "decoded": {
+        "reason": 3,
+        "reason_name": "UPSTREAM_CANCELLED",
+        "detail": "parent: ABORT"
+      }
+    },
+    {
+      "id": "budget-tokens-cost-currency",
+      "section": "§8.7 vector 1",
+      "description": "BUDGET on operation 5 with 1000 tokens remaining, 5000 micro-USD cost remaining, currency USD",
+      "encoded_hex": "0600050e03010243e8020253880303555344",
+      "frame": {
+        "type": 6,
+        "type_name": "BUDGET",
+        "flags": 0,
+        "op_id": 5,
+        "payload_hex": "03010243e8020253880303555344"
+      },
+      "decoded": {
+        "entries": [
+          { "field_id": 1, "field_name": "TOKENS_REMAINING", "value": 1000 },
+          { "field_id": 2, "field_name": "COST_MICROUNITS_REMAINING", "value": 5000 },
+          { "field_id": 3, "field_name": "CURRENCY", "value": "USD" }
+        ]
+      }
+    },
+    {
+      "id": "budget-deadline-only",
+      "section": "§8.7 vector 2",
+      "description": "BUDGET on operation 7 with deadline 2026-12-31T23:59:59.999Z (UTC ms = 1798761599999)",
+      "encoded_hex": "0600070b010408000001a2ce8bd3ff",
+      "frame": {
+        "type": 6,
+        "type_name": "BUDGET",
+        "flags": 0,
+        "op_id": 7,
+        "payload_hex": "010408000001a2ce8bd3ff"
+      },
+      "decoded": {
+        "entries": [
+          { "field_id": 4, "field_name": "DEADLINE_MS", "value": 1798761599999, "value_iso": "2026-12-31T23:59:59.999Z" }
+        ]
+      }
+    }
+  ]
+}
