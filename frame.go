@@ -15,15 +15,16 @@ import (
 type FrameType uint8
 
 const (
-	FrameHello      FrameType = 0x01
-	FrameCapability FrameType = 0x02
-	FrameInvoke     FrameType = 0x03
-	FrameStream     FrameType = 0x04
-	FrameCancel     FrameType = 0x05
-	FrameBudget     FrameType = 0x06
-	FrameDelegate   FrameType = 0x07
-	FrameError      FrameType = 0x08
-	FrameGoodbye    FrameType = 0x09
+	FrameHello    FrameType = 0x01
+	FrameInvoke   FrameType = 0x03
+	FrameStream   FrameType = 0x04
+	FrameCancel   FrameType = 0x05
+	FrameBudget   FrameType = 0x06
+	FrameDelegate FrameType = 0x07
+	FrameError    FrameType = 0x08
+	FrameGoodbye  FrameType = 0x09
+	// Frame code 0x02 is reserved per spec §3 / §4.5.5. v0.2 receivers
+	// MUST treat an incoming 0x02 frame as a protocol violation.
 )
 
 // MaxVarint is the largest value representable in a QUIC-style varint

@@ -78,65 +78,6 @@ func TestHelloPayload_RoundTrip(t *testing.T) {
 	}
 }
 
-func TestNegotiateCapabilities_Intersection(t *testing.T) {
-	local := []Capability{
-		{Name: "a", Version: 1},
-		{Name: "b", Version: 2},
-		{Name: "c", Version: 1},
-	}
-	peer := []Capability{
-		{Name: "a", Version: 1}, // active
-		{Name: "b", Version: 99},
-		{Name: "d", Version: 1},
-	}
-	active, err := negotiateCapabilities(local, peer)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if len(active) != 1 || active[0].Name != "a" {
-		t.Errorf("active = %+v, want [a v1]", active)
-	}
-}
-
-func TestNegotiateCapabilities_RequiredMissing(t *testing.T) {
-	local := []Capability{
-		{Name: "must-have", Version: 1, Required: true},
-	}
-	peer := []Capability{
-		{Name: "other", Version: 1},
-	}
-	_, err := negotiateCapabilities(local, peer)
-	if !errors.Is(err, ErrMissingRequiredCapability) {
-		t.Errorf("got err=%v, want ErrMissingRequiredCapability", err)
-	}
-}
-
-func TestNegotiateCapabilities_PeerRequiredMissing(t *testing.T) {
-	local := []Capability{
-		{Name: "other", Version: 1},
-	}
-	peer := []Capability{
-		{Name: "must-have", Version: 1, Required: true},
-	}
-	_, err := negotiateCapabilities(local, peer)
-	if !errors.Is(err, ErrMissingRequiredCapability) {
-		t.Errorf("got err=%v, want ErrMissingRequiredCapability", err)
-	}
-}
-
-func TestNegotiateCapabilities_RequiredVersionMismatch(t *testing.T) {
-	local := []Capability{
-		{Name: "x", Version: 1, Required: true},
-	}
-	peer := []Capability{
-		{Name: "x", Version: 2}, // wrong version, no match
-	}
-	_, err := negotiateCapabilities(local, peer)
-	if !errors.Is(err, ErrMissingRequiredCapability) {
-		t.Errorf("got err=%v, want ErrMissingRequiredCapability", err)
-	}
-}
-
 func TestHandshake_E2E_Success(t *testing.T) {
 	listener := mustListen(t)
 	defer func() { _ = listener.Close() }()

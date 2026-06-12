@@ -22,13 +22,6 @@ func (v Version) String() string {
 	return fmt.Sprintf("%d.%d", v.Major, v.Minor)
 }
 
-// Capability is one capability advertisement (spec §4.3).
-type Capability struct {
-	Name     string
-	Version  uint64
-	Required bool
-}
-
 // NodeConfig configures the local AIRE node for the §4 handshake.
 type NodeConfig struct {
 	NodeID       string
@@ -39,7 +32,7 @@ type NodeConfig struct {
 type HandshakeState struct {
 	PeerNodeID         string
 	NegotiatedMinor    uint64       // major matches CurrentVersion.Major
-	ActiveCapabilities []Capability // intersection by exact-version match (spec §4.5)
+	ActiveCapabilities []Capability // name-matched, minor = min(local, peer) per spec §4.5.4
 }
 
 // Handshake error codes from spec §4.6.
@@ -158,46 +151,6 @@ func readString(data []byte) (string, int, error) {
 	return string(data[n:end]), end, nil
 }
 
-// negotiateCapabilities computes the active capability set (exact-version
-// intersection, spec §4.5) and validates required-capability invariants.
-func negotiateCapabilities(local, peer []Capability) ([]Capability, error) {
-	peerByName := make(map[string]Capability, len(peer))
-	for _, c := range peer {
-		peerByName[c.Name] = c
-	}
-	localByName := make(map[string]Capability, len(local))
-	for _, c := range local {
-		localByName[c.Name] = c
-	}
-
-	var active []Capability
-	for _, lc := range local {
-		if pc, ok := peerByName[lc.Name]; ok && pc.Version == lc.Version {
-			active = append(active, lc)
-		}
-	}
-
-	for _, lc := range local {
-		if !lc.Required {
-			continue
-		}
-		pc, ok := peerByName[lc.Name]
-		if !ok || pc.Version != lc.Version {
-			return nil, fmt.Errorf("%w: local requires %s v%d", ErrMissingRequiredCapability, lc.Name, lc.Version)
-		}
-	}
-	for _, pc := range peer {
-		if !pc.Required {
-			continue
-		}
-		lc, ok := localByName[pc.Name]
-		if !ok || lc.Version != pc.Version {
-			return nil, fmt.Errorf("%w: peer requires %s v%d", ErrMissingRequiredCapability, pc.Name, pc.Version)
-		}
-	}
-	return active, nil
-}
-
 // runHandshake executes the §4 HELLO exchange on the control stream and
 // returns the negotiated state. Both sides call this with their local config;
 // the protocol is symmetric (both peers send and receive HELLO).
@@ -231,7 +184,7 @@ func runHandshake(ctrl *Stream, local NodeConfig) (*HandshakeState, error) {
 		negotiatedMinor = peerVer.Minor
 	}
 
-	active, err := negotiateCapabilities(local.Capabilities, peerCaps)
+	active, err := NegotiateCapabilities(local.Capabilities, peerCaps)
 	if err != nil {
 		return nil, err
 	}
