@@ -70,30 +70,33 @@ func encodeHelloPayload(cfg NodeConfig) []byte {
 	return buf
 }
 
-// decodeHelloPayload parses a HELLO payload per spec §4.1.
-func decodeHelloPayload(payload []byte) (Version, string, []Capability, error) {
+// decodeHelloPayloadV02 parses a HELLO payload (§4.1) and returns any
+// trailing bytes after the capability array. v0.1 HELLOs have no trailing
+// bytes; v0.2+ HELLOs carry a signature block trailer (§5.4.3) the caller
+// parses via DecodeSignatureBlock.
+func decodeHelloPayloadV02(payload []byte) (Version, string, []Capability, []byte, error) {
 	pos := 0
 	major, n, err := ReadVarint(payload[pos:])
 	if err != nil {
-		return Version{}, "", nil, fmt.Errorf("%w: VerMajor: %v", ErrMalformedHello, err)
+		return Version{}, "", nil, nil, fmt.Errorf("%w: VerMajor: %v", ErrMalformedHello, err)
 	}
 	pos += n
 
 	minor, n, err := ReadVarint(payload[pos:])
 	if err != nil {
-		return Version{}, "", nil, fmt.Errorf("%w: VerMinor: %v", ErrMalformedHello, err)
+		return Version{}, "", nil, nil, fmt.Errorf("%w: VerMinor: %v", ErrMalformedHello, err)
 	}
 	pos += n
 
 	nodeID, n, err := readString(payload[pos:])
 	if err != nil {
-		return Version{}, "", nil, fmt.Errorf("%w: NodeID: %v", ErrMalformedHello, err)
+		return Version{}, "", nil, nil, fmt.Errorf("%w: NodeID: %v", ErrMalformedHello, err)
 	}
 	pos += n
 
 	numCaps, n, err := ReadVarint(payload[pos:])
 	if err != nil {
-		return Version{}, "", nil, fmt.Errorf("%w: NumCaps: %v", ErrMalformedHello, err)
+		return Version{}, "", nil, nil, fmt.Errorf("%w: NumCaps: %v", ErrMalformedHello, err)
 	}
 	pos += n
 
@@ -101,18 +104,18 @@ func decodeHelloPayload(payload []byte) (Version, string, []Capability, error) {
 	for i := uint64(0); i < numCaps; i++ {
 		name, n, err := readString(payload[pos:])
 		if err != nil {
-			return Version{}, "", nil, fmt.Errorf("%w: cap[%d].name: %v", ErrMalformedHello, i, err)
+			return Version{}, "", nil, nil, fmt.Errorf("%w: cap[%d].name: %v", ErrMalformedHello, i, err)
 		}
 		pos += n
 
 		ver, n, err := ReadVarint(payload[pos:])
 		if err != nil {
-			return Version{}, "", nil, fmt.Errorf("%w: cap[%d].version: %v", ErrMalformedHello, i, err)
+			return Version{}, "", nil, nil, fmt.Errorf("%w: cap[%d].version: %v", ErrMalformedHello, i, err)
 		}
 		pos += n
 
 		if pos >= len(payload) {
-			return Version{}, "", nil, fmt.Errorf("%w: cap[%d].required: missing byte", ErrMalformedHello, i)
+			return Version{}, "", nil, nil, fmt.Errorf("%w: cap[%d].required: missing byte", ErrMalformedHello, i)
 		}
 		var req bool
 		switch payload[pos] {
@@ -121,15 +124,12 @@ func decodeHelloPayload(payload []byte) (Version, string, []Capability, error) {
 		case 0x01:
 			req = true
 		default:
-			return Version{}, "", nil, fmt.Errorf("%w: cap[%d].required: invalid value 0x%02x", ErrMalformedHello, i, payload[pos])
+			return Version{}, "", nil, nil, fmt.Errorf("%w: cap[%d].required: invalid value 0x%02x", ErrMalformedHello, i, payload[pos])
 		}
 		pos++
 		caps = append(caps, Capability{Name: name, Version: ver, Required: req})
 	}
-	if pos != len(payload) {
-		return Version{}, "", nil, fmt.Errorf("%w: %d trailing payload bytes", ErrMalformedHello, len(payload)-pos)
-	}
-	return Version{Major: major, Minor: minor}, nodeID, caps, nil
+	return Version{Major: major, Minor: minor}, nodeID, caps, payload[pos:], nil
 }
 
 // appendString appends a length-prefixed UTF-8 string to dst (spec §4.2).
@@ -170,7 +170,7 @@ func runHandshake(ctrl *Stream, local NodeConfig) (*HandshakeState, error) {
 		return nil, fmt.Errorf("%w: HELLO had non-zero OpID %d", ErrProtocolViolation, f.OpID)
 	}
 
-	peerVer, peerNodeID, peerCaps, err := decodeHelloPayload(f.Payload)
+	peerVer, peerNodeID, peerCaps, _, err := decodeHelloPayloadV02(f.Payload)
 	if err != nil {
 		return nil, err
 	}

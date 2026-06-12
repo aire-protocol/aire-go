@@ -56,9 +56,12 @@ func TestHelloPayload_RoundTrip(t *testing.T) {
 	}
 	for i, cfg := range cases {
 		payload := encodeHelloPayload(cfg)
-		ver, nodeID, caps, err := decodeHelloPayload(payload)
+		ver, nodeID, caps, trailing, err := decodeHelloPayloadV02(payload)
 		if err != nil {
 			t.Fatalf("case %d decode error: %v", i, err)
+		}
+		if len(trailing) != 0 {
+			t.Errorf("case %d: expected no trailing bytes, got %d", i, len(trailing))
 		}
 		if ver != CurrentVersion {
 			t.Errorf("case %d version: got %v want %v", i, ver, CurrentVersion)

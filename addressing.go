@@ -308,9 +308,17 @@ func methodOf(did string) string {
 }
 
 type didDocument struct {
-	ID          string         `json:"id"`
-	AlsoKnownAs []string       `json:"alsoKnownAs"`
-	Service     []serviceEntry `json:"service"`
+	ID                 string               `json:"id"`
+	AlsoKnownAs        []string             `json:"alsoKnownAs"`
+	Service            []serviceEntry       `json:"service"`
+	VerificationMethod []verificationMethod `json:"verificationMethod"`
+}
+
+type verificationMethod struct {
+	ID                 string `json:"id"`
+	Type               string `json:"type"`
+	Controller         string `json:"controller"`
+	PublicKeyMultibase string `json:"publicKeyMultibase"`
 }
 
 type serviceEntry struct {
