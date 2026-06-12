@@ -3,6 +3,7 @@ package aire
 import (
 	"bytes"
 	"context"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ func TestPeers_AgentOnANodeDelegatesToAgentOnBNode(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	nodeB := NewNode(NodeConfig{NodeID: "vega-B"})
+	nodeB := NewNode(NodeConfig{})
 	defer func() { _ = nodeB.Stop() }()
 	if err := nodeB.RegisterAgent("worker", AgentFunc(func(_ context.Context, inv *Invoke) error {
 		return inv.Op.Send(Frame{Type: FrameStream, Payload: append([]byte("B:"), inv.Args...)})
@@ -33,15 +34,15 @@ func TestPeers_AgentOnANodeDelegatesToAgentOnBNode(t *testing.T) {
 		t.Fatalf("dial B from A: %v", err)
 	}
 	defer func() { _ = bConn.Close() }()
-	bState, err := bConn.Handshake(ctx, NodeConfig{NodeID: "vega-A"})
+	bState, err := bConn.Handshake(ctx, NodeConfig{})
 	if err != nil {
 		t.Fatalf("A→B handshake: %v", err)
 	}
-	if bState.PeerNodeID != "vega-B" {
-		t.Errorf("A sees peer NodeID = %q, want vega-B", bState.PeerNodeID)
+	if !strings.HasPrefix(bState.PeerNodeID, "did:") {
+		t.Errorf("A sees peer NodeID = %q, want a DID", bState.PeerNodeID)
 	}
 
-	nodeA := NewNode(NodeConfig{NodeID: "vega-A"})
+	nodeA := NewNode(NodeConfig{})
 	defer func() { _ = nodeA.Stop() }()
 	if err := nodeA.RegisterAgent("coordinator", AgentFunc(func(ctx context.Context, inv *Invoke) error {
 		op, err := bConn.Invoke(ctx, "worker", "do", inv.Args)
@@ -66,7 +67,7 @@ func TestPeers_AgentOnANodeDelegatesToAgentOnBNode(t *testing.T) {
 		t.Fatalf("client dial A: %v", err)
 	}
 	defer func() { _ = clientConn.Close() }()
-	if _, err := clientConn.Handshake(ctx, NodeConfig{NodeID: "client"}); err != nil {
+	if _, err := clientConn.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("client handshake A: %v", err)
 	}
 
@@ -98,7 +99,7 @@ func TestPeers_FanOutToBHasNoHeadOfLineBlocking(t *testing.T) {
 	const slowDelay = 200 * time.Millisecond
 	const fastDelay = 10 * time.Millisecond
 
-	nodeB := NewNode(NodeConfig{NodeID: "vega-B"})
+	nodeB := NewNode(NodeConfig{})
 	defer func() { _ = nodeB.Stop() }()
 	if err := nodeB.RegisterAgent("slow", AgentFunc(func(_ context.Context, inv *Invoke) error {
 		time.Sleep(slowDelay)
@@ -121,11 +122,11 @@ func TestPeers_FanOutToBHasNoHeadOfLineBlocking(t *testing.T) {
 		t.Fatalf("dial B from A: %v", err)
 	}
 	defer func() { _ = bConn.Close() }()
-	if _, err := bConn.Handshake(ctx, NodeConfig{NodeID: "vega-A"}); err != nil {
+	if _, err := bConn.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("A→B handshake: %v", err)
 	}
 
-	nodeA := NewNode(NodeConfig{NodeID: "vega-A"})
+	nodeA := NewNode(NodeConfig{})
 	defer func() { _ = nodeA.Stop() }()
 	if err := nodeA.RegisterAgent("coordinator", AgentFunc(func(ctx context.Context, inv *Invoke) error {
 		var wg sync.WaitGroup
@@ -165,7 +166,7 @@ func TestPeers_FanOutToBHasNoHeadOfLineBlocking(t *testing.T) {
 		t.Fatalf("client dial A: %v", err)
 	}
 	defer func() { _ = clientConn.Close() }()
-	if _, err := clientConn.Handshake(ctx, NodeConfig{NodeID: "client"}); err != nil {
+	if _, err := clientConn.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("client handshake A: %v", err)
 	}
 

@@ -11,7 +11,7 @@ import (
 )
 
 func TestNode_RegisterAgent_Validations(t *testing.T) {
-	node := NewNode(NodeConfig{NodeID: "n"})
+	node := NewNode(NodeConfig{})
 	if err := node.RegisterAgent("", AgentFunc(func(context.Context, *Invoke) error { return nil })); err == nil {
 		t.Errorf("empty ID should error")
 	}
@@ -27,7 +27,7 @@ func TestNode_RegisterAgent_Validations(t *testing.T) {
 }
 
 func TestNode_DispatchInvoke(t *testing.T) {
-	node := NewNode(NodeConfig{NodeID: "server"})
+	node := NewNode(NodeConfig{})
 	defer func() { _ = node.Stop() }()
 
 	got := make(chan *Invoke, 1)
@@ -50,7 +50,7 @@ func TestNode_DispatchInvoke(t *testing.T) {
 		t.Fatalf("Dial: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
-	if _, err := conn.Handshake(ctx, NodeConfig{NodeID: "client"}); err != nil {
+	if _, err := conn.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("Handshake: %v", err)
 	}
 
@@ -85,7 +85,7 @@ func TestNode_DispatchInvoke(t *testing.T) {
 }
 
 func TestNode_UnknownAgent_ClosesOperation(t *testing.T) {
-	node := NewNode(NodeConfig{NodeID: "server"})
+	node := NewNode(NodeConfig{})
 	defer func() { _ = node.Stop() }()
 	if err := node.Listen("127.0.0.1:0", DevTLSConfig()); err != nil {
 		t.Fatalf("Listen: %v", err)
@@ -99,7 +99,7 @@ func TestNode_UnknownAgent_ClosesOperation(t *testing.T) {
 		t.Fatalf("Dial: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
-	if _, err := conn.Handshake(ctx, NodeConfig{NodeID: "client"}); err != nil {
+	if _, err := conn.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("Handshake: %v", err)
 	}
 
@@ -116,7 +116,7 @@ func TestNode_UnknownAgent_ClosesOperation(t *testing.T) {
 }
 
 func TestNode_MultipleAgents_RouteCorrectly(t *testing.T) {
-	node := NewNode(NodeConfig{NodeID: "server"})
+	node := NewNode(NodeConfig{})
 	defer func() { _ = node.Stop() }()
 
 	a1Hits := make(chan struct{}, 4)
@@ -145,7 +145,7 @@ func TestNode_MultipleAgents_RouteCorrectly(t *testing.T) {
 		t.Fatalf("Dial: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
-	if _, err := conn.Handshake(ctx, NodeConfig{NodeID: "client"}); err != nil {
+	if _, err := conn.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("Handshake: %v", err)
 	}
 
@@ -184,7 +184,7 @@ func TestNode_MultipleAgents_RouteCorrectly(t *testing.T) {
 }
 
 func TestNode_Stop_IsIdempotent(t *testing.T) {
-	node := NewNode(NodeConfig{NodeID: "n"})
+	node := NewNode(NodeConfig{})
 	if err := node.Listen("127.0.0.1:0", DevTLSConfig()); err != nil {
 		t.Fatalf("Listen: %v", err)
 	}

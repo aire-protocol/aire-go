@@ -33,7 +33,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	vegaB := aire.NewNode(aire.NodeConfig{NodeID: "vega-B"})
+	vegaB := aire.NewNode(aire.NodeConfig{})
 	defer func() { _ = vegaB.Stop() }()
 	must(vegaB.RegisterAgent("wordcount", aire.AgentFunc(wordcountAgent)))
 	must(vegaB.RegisterAgent("reverse", aire.AgentFunc(reverseAgent)))
@@ -45,14 +45,14 @@ func main() {
 		log.Fatalf("vega-A → vega-B dial: %v", err)
 	}
 	defer func() { _ = bConn.Close() }()
-	bState, err := bConn.Handshake(ctx, aire.NodeConfig{NodeID: "vega-A"})
+	bState, err := bConn.Handshake(ctx, aire.NodeConfig{})
 	if err != nil {
 		log.Fatalf("vega-A → vega-B handshake: %v", err)
 	}
 	logf("[vega-A]   peer link established to %s (negotiated 0.%d)",
 		bState.PeerNodeID, bState.NegotiatedMinor)
 
-	vegaA := aire.NewNode(aire.NodeConfig{NodeID: "vega-A"})
+	vegaA := aire.NewNode(aire.NodeConfig{})
 	defer func() { _ = vegaA.Stop() }()
 	must(vegaA.RegisterAgent("coordinator", aire.AgentFunc(coordinatorAgent(bConn))))
 	must(vegaA.Listen("127.0.0.1:0", aire.DevTLSConfig()))
@@ -63,7 +63,7 @@ func main() {
 		log.Fatalf("client dial: %v", err)
 	}
 	defer func() { _ = cConn.Close() }()
-	cState, err := cConn.Handshake(ctx, aire.NodeConfig{NodeID: "client"})
+	cState, err := cConn.Handshake(ctx, aire.NodeConfig{})
 	if err != nil {
 		log.Fatalf("client handshake: %v", err)
 	}

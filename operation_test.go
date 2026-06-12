@@ -28,7 +28,7 @@ func handshookPair(t *testing.T) (client, server *Conn, cleanup func()) {
 			srvCh <- srvResult{nil, err}
 			return
 		}
-		if _, err := c.Handshake(context.Background(), NodeConfig{NodeID: "server"}); err != nil {
+		if _, err := c.Handshake(context.Background(), NodeConfig{}); err != nil {
 			srvCh <- srvResult{nil, err}
 			return
 		}
@@ -42,7 +42,7 @@ func handshookPair(t *testing.T) (client, server *Conn, cleanup func()) {
 	if err != nil {
 		t.Fatalf("Dial: %v", err)
 	}
-	if _, err := client.Handshake(ctx, NodeConfig{NodeID: "client"}); err != nil {
+	if _, err := client.Handshake(ctx, NodeConfig{}); err != nil {
 		t.Fatalf("client Handshake: %v", err)
 	}
 

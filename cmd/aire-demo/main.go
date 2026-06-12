@@ -27,7 +27,7 @@ func main() {
 	header()
 
 	// 1. Server node with a "stream" agent.
-	server := aire.NewNode(aire.NodeConfig{NodeID: "demo-server"})
+	server := aire.NewNode(aire.NodeConfig{})
 	if err := server.RegisterAgent("stream", aire.AgentFunc(streamAgent)); err != nil {
 		log.Fatalf("RegisterAgent: %v", err)
 	}
@@ -46,7 +46,7 @@ func main() {
 		log.Fatalf("Dial: %v", err)
 	}
 
-	state, err := conn.Handshake(ctx, aire.NodeConfig{NodeID: "demo-client"})
+	state, err := conn.Handshake(ctx, aire.NodeConfig{})
 	if err != nil {
 		log.Fatalf("client Handshake: %v", err)
 	}
