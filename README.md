@@ -2,11 +2,11 @@
 
 Reference Go implementation of [AIRE](../aire-spec) — the QUIC-native agent protocol.
 
-> Status: v0.2 conformant.
+> Status: v0.2 conformant end-to-end; v0.3 codecs landed.
 
 ## Status
 
-This is the canonical Go implementation of the AIRE spec. It tracks the spec and is the reference any other implementation should match for behavior. v0.2 is complete — frame codec, QUIC transport, signed HELLO handshake (Ed25519 over `did:key` / `did:web`), capability negotiation (naming, versioning, active set), AIREv1 service-entry + handle resolution, Operation stream multiplexing, Node runtime, replay protection, and conformance harnesses that round-trip every vector in [`aire-spec/vectors/v0.1.json`](https://github.com/aire-protocol/aire-spec/blob/main/vectors/v0.1.json) and [`aire-spec/vectors/v0.2.json`](https://github.com/aire-protocol/aire-spec/blob/main/vectors/v0.2.json). v0.3 work (CANCEL frame, BUDGET, DELEGATE propagation) is not started.
+This is the canonical Go implementation of the AIRE spec. It tracks the spec and is the reference any other implementation should match for behavior. v0.2 is complete end-to-end — frame codec, QUIC transport, signed HELLO handshake (Ed25519 over `did:key` / `did:web`), capability negotiation (naming, versioning, active set), AIREv1 service-entry + handle resolution, Operation stream multiplexing, Node runtime, replay protection, with conformance round-tripping every vector in [`aire-spec/vectors/v0.1.json`](https://github.com/aire-protocol/aire-spec/blob/main/vectors/v0.1.json) and [`aire-spec/vectors/v0.2.json`](https://github.com/aire-protocol/aire-spec/blob/main/vectors/v0.2.json). v0.3 codecs landed — CANCEL frame (reason codes, detail, v0.1 backward-compat) and BUDGET frame (TLV with tokens / cost / currency / deadline) — both green against [`vectors/v0.3.json`](https://github.com/aire-protocol/aire-spec/blob/main/vectors/v0.3.json); runtime integration (per-op cancellation propagation, budget-driven refusal) is the remaining v0.3 work. v0.4 RESUMABLE / RESUME frames are not yet implemented.
 
 ## Install
 
@@ -30,12 +30,15 @@ go run ./cmd/aire-peers
 - `handshake.go` — signed HELLO exchange, version + capability negotiation (spec §4)
 - `capability.go` — capability naming, versioning, active-set negotiation (spec §4.5 / §4.6)
 - `identity.go` — Ed25519, multibase, did:key, signature block codec, replay cache (spec §5.4)
+- `cancel.go` — CANCEL frame payload codec, reason codes, operation error codes (spec §7.2)
+- `budget.go` — BUDGET frame TLV codec (tokens / cost / currency / deadline) (spec §8)
 - `addressing.go` — did:web + handle resolver, AIREv1 service entry parser (spec §§5–6)
 - `conn.go` — connection abstraction over QUIC, including `DevTLSConfig` for local development
 - `operation.go` — per-Operation stream multiplexing (spec §2.4)
 - `node.go` — local node runtime: accept loop, dispatch, agent registry
 - `conformance_test.go` — round-trips every vector in `aire-spec/vectors/v0.1.json`
 - `identity_test.go` — verifies the v0.2 signed-HELLO vector end to end
+- `cancel_test.go` + `budget_test.go` — conform against `aire-spec/vectors/v0.3.json`
 - `cmd/aire-demo` — two-node demo (streaming + cancel mid-stream)
 - `cmd/aire-peers` — federation demo (Node A delegates to Node B over AIRE)
 
