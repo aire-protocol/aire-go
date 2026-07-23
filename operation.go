@@ -11,6 +11,20 @@ import (
 type Operation struct {
 	OpID   uint64
 	stream *Stream
+	conn   *Conn
+}
+
+// PeerNodeID returns the authenticated NodeID (DID) of the connection peer,
+// as established by the signed HELLO (§5.4). Identity is bound per stream to
+// the connection's handshake; exposing it here lets the receiving side of an
+// Operation authorize against who is actually on the wire. Empty before the
+// handshake completes (which cannot happen for Operations obtained via
+// NewOperation/AcceptOperation, since both require a completed handshake).
+func (op *Operation) PeerNodeID() string {
+	if op.conn == nil || op.conn.state == nil {
+		return ""
+	}
+	return op.conn.state.PeerNodeID
 }
 
 // NewOperation opens a new stream on the connection and binds it to an
@@ -29,6 +43,7 @@ func (c *Conn) NewOperation(ctx context.Context) (*Operation, error) {
 	return &Operation{
 		OpID:   uint64(stream.qs.StreamID()),
 		stream: stream,
+		conn:   c,
 	}, nil
 }
 
@@ -48,6 +63,7 @@ func (c *Conn) AcceptOperation(ctx context.Context) (*Operation, error) {
 	return &Operation{
 		OpID:   uint64(stream.qs.StreamID()),
 		stream: stream,
+		conn:   c,
 	}, nil
 }
 

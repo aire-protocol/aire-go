@@ -31,6 +31,11 @@ type Invoke struct {
 	Operation string
 	Args      []byte
 	Op        *Operation
+
+	// PeerNodeID is the authenticated DID of the peer that sent the INVOKE,
+	// as established by the connection's signed HELLO (§5.4). Agents SHOULD
+	// authorize against this rather than any identity claimed in Args.
+	PeerNodeID string
 }
 
 // Node is a local AIRE runtime: it listens for inbound connections, completes
@@ -192,10 +197,11 @@ func (n *Node) handleOperation(op *Operation) {
 	}
 
 	inv := &Invoke{
-		AgentID:   agentID,
-		Operation: opName,
-		Args:      args,
-		Op:        op,
+		AgentID:    agentID,
+		Operation:  opName,
+		Args:       args,
+		Op:         op,
+		PeerNodeID: op.PeerNodeID(),
 	}
 	_ = agent.Handle(n.ctx, inv)
 	_ = op.Close()
